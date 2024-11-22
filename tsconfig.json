@@ -23,7 +23,8 @@
     }
   },
   "include": [
-    "./src/**/*.tsx?"
+    "./src/**/*.tsx?",
+    "src/types/global.d.ts"
   ],
   "files": [
     "./references.d.ts"
