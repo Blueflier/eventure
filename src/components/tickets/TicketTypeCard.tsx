@@ -45,8 +45,8 @@ export function TicketTypeCard({ ticket, onUpdate, isOrganizer }: Props) {
 
       {ticket.pricing[0] && (
         <Text style={styles.validity}>
-          Valid from {format(new Date(ticket.pricing[0].start_date), 'PPP')} to{' '}
-          {format(new Date(ticket.pricing[0].end_date), 'PPP')}
+          Valid from {format(new Date(ticket.pricing[0].start_time), 'PPP')} to{' '}
+          {format(new Date(ticket.pricing[0].end_time), 'PPP')}
         </Text>
       )}
 

@@ -3,8 +3,8 @@ export interface EventPromotion {
   event_id: string;
   user_id: string;
   promotion_type: PromotionType;
-  start_date: string;
-  end_date: string;
+  start_time: string;
+  end_time: string;
   cost_in_currency: number;
   created_at: string;
   transaction_id?: string;

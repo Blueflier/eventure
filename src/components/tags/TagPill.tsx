@@ -6,10 +6,10 @@ import { Tag } from '../../types/Tag';
 interface Props {
   tag: Tag;
   onRemove?: () => void;
-  size?: 'small' | 'medium' | 'large';
+  size?: number;
 }
 
-export function TagPill({ tag, onRemove, size = 'medium' }: Props) {
+export function TagPill({ tag, onRemove, size = 32 }: Props) {
   return (
     <View style={[styles.container, styles[size]]}>
       <Text style={[styles.text, styles[`${size}Text`]]}>{tag.name}</Text>
@@ -17,7 +17,7 @@ export function TagPill({ tag, onRemove, size = 'medium' }: Props) {
         <TouchableOpacity onPress={onRemove} style={styles.removeButton}>
           <Ionicons
             name="close-circle"
-            size={size === 'small' ? 14 : 16}
+            size={size === 24 ? 14 : size === 32 ? 16 : 18}
             color="#666"
           />
         </TouchableOpacity>
@@ -59,3 +59,9 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
 });
+
+export const TAG_SIZES = {
+  small: 24,
+  medium: 32,
+  large: 40,
+} as const;

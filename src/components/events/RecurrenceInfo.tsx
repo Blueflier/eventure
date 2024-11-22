@@ -15,7 +15,7 @@ export function RecurrenceInfo({ recurrence }: Props) {
     
     let text = `Repeats every ${interval} `;
     text += interval === 1 ? pattern.slice(0, -2) : pattern;
-    text += ` until ${format(new Date(recurrence.recurrence_end_date), 'PP')}`;
+    text += ` until ${format(new Date(recurrence.recurrence_end_time), 'PP')}`;
     
     return text;
   };

@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
-import { DateTimePicker } from '../common/DateTimePicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { UpdateTicketPricingRequest } from '../../types/Ticket';
 
 interface Props {
   initialData?: {
     price: number;
-    start_date: string;
-    end_date: string;
+    start_time: string;
+    end_time: string;
     quantity_available: number;
   };
   onSubmit: (data: UpdateTicketPricingRequest) => void;
@@ -25,16 +25,16 @@ export function TicketPricingForm({
 }: Props) {
   const [formData, setFormData] = useState({
     price: initialData?.price.toString() || '',
-    start_date: initialData?.start_date || new Date().toISOString(),
-    end_date: initialData?.end_date || new Date().toISOString(),
+    start_time: initialData?.start_time || new Date().toISOString(),
+    end_time: initialData?.end_time || new Date().toISOString(),
     quantity_available: initialData?.quantity_available.toString() || '',
   });
 
   const handleSubmit = () => {
     onSubmit({
       price: parseFloat(formData.price),
-      start_date: formData.start_date,
-      end_date: formData.end_date,
+      start_time: formData.start_time,
+      end_time: formData.end_time,
       quantity_available: parseInt(formData.quantity_available),
     });
   };
@@ -60,20 +60,18 @@ export function TicketPricingForm({
       />
 
       <DateTimePicker
-        label="Start Date"
-        value={new Date(formData.start_date)}
-        onChange={(date) =>
-          setFormData({ ...formData, start_date: date.toISOString() })
+        value={new Date(formData.start_time)}
+        onChange={(event, date) =>
+          setFormData({ ...formData, start_time: date?.toISOString() || '' })
         }
       />
 
       <DateTimePicker
-        label="End Date"
-        value={new Date(formData.end_date)}
-        onChange={(date) =>
-          setFormData({ ...formData, end_date: date.toISOString() })
+        value={new Date(formData.end_time)}
+        onChange={(event, date) =>
+          setFormData({ ...formData, end_time: date?.toISOString() || '' })
         }
-        minimumDate={new Date(formData.start_date)}
+        minimumDate={new Date(formData.start_time)}
       />
 
       <View style={styles.buttonContainer}>

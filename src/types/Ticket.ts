@@ -10,8 +10,8 @@ export interface TicketPricing {
   ticket_pricing_id: string;
   ticket_type_id: string;
   price: number;
-  start_date: string;
-  end_date: string;
+  start_time: string;
+  end_time: string;
   quantity_available: number;
   created_at: string;
 }
@@ -27,15 +27,15 @@ export interface CreateTicketTypeRequest {
   description: string;
   pricing: {
     price: number;
-    start_date: string;
-    end_date: string;
+    start_time: string;
+    end_time: string;
     quantity_available: number;
   }[];
 }
 
 export interface UpdateTicketPricingRequest {
   price: number;
-  start_date: string;
-  end_date: string;
+  start_time: string;
+  end_time: string;
   quantity_available: number;
 }

@@ -1,86 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { Alert } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Notification, NotificationType } from '../types/Notification';
+
+const BATCH_SIZE = 50;
 
 export function useNotifications() {
   const { session } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchNotifications();
-      subscribeToNotifications();
-    }
-  }, [session]);
+  const fetchNotifications = useCallback(async () => {
+    if (!session?.user?.id) return;
 
-  const fetchNotifications = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', session?.user.id)
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
       setNotifications(data || []);
       updateUnreadCount(data || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      Alert.alert('Error', 'Failed to load notifications');
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user?.id]);
 
-  const subscribeToNotifications = () => {
-    const subscription = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${session?.user.id}`,
-        },
-        (payload) => {
-          handleNotificationChange(payload);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  };
-
-  const handleNotificationChange = (payload: any) => {
-    if (payload.eventType === 'INSERT') {
-      setNotifications((prev) => [payload.new, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-    } else if (payload.eventType === 'UPDATE') {
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.notification_id === payload.new.notification_id ? payload.new : n
-        )
-      );
-      updateUnreadCount([...notifications]);
-    } else if (payload.eventType === 'DELETE') {
-      setNotifications((prev) =>
-        prev.filter((n) => n.notification_id !== payload.old.notification_id)
-      );
-      updateUnreadCount([...notifications]);
-    }
-  };
-
-  const updateUnreadCount = (notifs: Notification[]) => {
-    const count = notifs.filter((n) => !n.read_status).length;
+  const updateUnreadCount = useCallback((notifs: Notification[]) => {
+    const count = notifs.filter(n => !n.read_status).length;
     setUnreadCount(count);
-  };
+  }, []);
 
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = useCallback(async (notificationId: string) => {
     try {
       const { error } = await supabase
         .from('notifications')
@@ -88,60 +48,52 @@ export function useNotifications() {
         .eq('notification_id', notificationId);
 
       if (error) throw error;
-      
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.notification_id === notificationId ? { ...n, read_status: true } : n
+
+      setNotifications(prev =>
+        prev.map(n =>
+          n.notification_id === notificationId
+            ? { ...n, read_status: true }
+            : n
         )
       );
-      setUnreadCount((prev) => prev - 1);
+      updateUnreadCount([...notifications]);
     } catch (error) {
       console.error('Error marking notification as read:', error);
+      Alert.alert('Error', 'Failed to update notification');
     }
-  };
+  }, [notifications, updateUnreadCount]);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read_status: true })
-        .eq('user_id', session?.user.id)
-        .eq('read_status', false);
-
-      if (error) throw error;
+      setLoading(true);
+      const unreadNotifications = notifications.filter(n => !n.read_status);
       
-      setNotifications((prev) =>
-        prev.map((n) => ({ ...n, read_status: true }))
+      // Process in batches
+      for (let i = 0; i < unreadNotifications.length; i += BATCH_SIZE) {
+        const batch = unreadNotifications.slice(i, i + BATCH_SIZE);
+        const { error } = await supabase
+          .from('notifications')
+          .update({ read_status: true })
+          .in('notification_id', batch.map(n => n.notification_id));
+
+        if (error) throw error;
+      }
+
+      setNotifications(prev =>
+        prev.map(n => ({ ...n, read_status: true }))
       );
       setUnreadCount(0);
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
+      Alert.alert('Error', 'Failed to update notifications');
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [notifications]);
 
-  const deleteNotification = async (notificationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('notification_id', notificationId);
-
-      if (error) throw error;
-      
-      setNotifications((prev) =>
-        prev.filter((n) => n.notification_id !== notificationId)
-      );
-      updateUnreadCount([...notifications]);
-    } catch (error) {
-      console.error('Error deleting notification:', error);
-    }
-  };
-
-  const getFilteredNotifications = (type?: NotificationType) => {
-    return type
-      ? notifications.filter((n) => n.type === type)
-      : notifications;
-  };
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
   return {
     notifications,
@@ -149,7 +101,6 @@ export function useNotifications() {
     loading,
     markAsRead,
     markAllAsRead,
-    deleteNotification,
-    getFilteredNotifications,
+    fetchNotifications,
   };
 }

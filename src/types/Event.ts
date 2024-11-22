@@ -6,6 +6,7 @@ export interface Event {
   location_address: string;
   latitude: number;
   longitude: number;
+  date: string;
   start_time: string;
   end_time: string;
   tags: string[];
@@ -36,5 +37,5 @@ export interface EventRecurrence {
   event_id: string;
   recurrence_pattern: 'daily' | 'weekly' | 'monthly';
   recurrence_interval: number;
-  recurrence_end_date: string;
+  recurrence_end_time: string;
 }

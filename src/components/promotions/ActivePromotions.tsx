@@ -33,8 +33,8 @@ export function ActivePromotions({ promotions, onCancel, loading }: Props) {
       <View style={styles.dateContainer}>
         <Text style={styles.dateLabel}>Active Period:</Text>
         <Text style={styles.dateText}>
-          {format(new Date(item.start_date), 'PPP')} -{' '}
-          {format(new Date(item.end_date), 'PPP')}
+          {format(new Date(item.start_time), 'PPP')} -{' '}
+          {format(new Date(item.end_time), 'PPP')}
         </Text>
       </View>
 

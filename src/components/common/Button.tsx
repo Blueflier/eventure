@@ -12,6 +12,7 @@ interface Props {
   onPress: () => void;
   variant?: 'solid' | 'outline';
   loading?: boolean;
+  disabled?: boolean;
   style?: ViewStyle;
 }
 
@@ -20,6 +21,7 @@ export function Button({
   onPress,
   variant = 'solid',
   loading = false,
+  disabled = false,
   style,
 }: Props) {
   return (
@@ -27,10 +29,12 @@ export function Button({
       style={[
         styles.button,
         variant === 'outline' && styles.outlineButton,
+        disabled ? styles.disabledButton : null,
+        loading && styles.disabledButton,
         style,
       ]}
       onPress={onPress}
-      disabled={loading}
+      disabled={disabled || loading}
     >
       {loading ? (
         <ActivityIndicator color={variant === 'outline' ? '#2e6ddf' : 'white'} />
@@ -39,6 +43,7 @@ export function Button({
           style={[
             styles.text,
             variant === 'outline' && styles.outlineText,
+            disabled && styles.disabledText,
           ]}
         >
           {title}
@@ -69,5 +74,12 @@ const styles = StyleSheet.create({
   },
   outlineText: {
     color: '#2e6ddf',
+  },
+  disabledButton: {
+    opacity: 0.5,
+    backgroundColor: '#ccc',
+  },
+  disabledText: {
+    opacity: 0.5,
   },
 });

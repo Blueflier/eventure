@@ -33,7 +33,7 @@ export function PopularTags({ onTagSelect }: Props) {
           <TagPill
             key={tag.tag_id}
             tag={tag}
-            size="large"
+            size={36}
             onRemove={onTagSelect ? () => onTagSelect(tag) : undefined}
           />
         ))}

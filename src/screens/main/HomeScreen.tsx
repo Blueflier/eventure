@@ -1,97 +1,110 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-native';
 import { Event } from '../../types';
 import { FeaturedCarousel } from '../../components/home/FeaturedCarousel';
 import { EventSection } from '../../components/home/EventSection';
 import { QuickActions } from '../../components/home/QuickActions';
-import * as BarCodeScanner from 'expo-barcode-scanner';
+import { Camera } from 'expo-camera';
+import { ErrorBoundary } from '../../components/common/ErrorBoundary';
 
 export default function HomeScreen() {
-  const [events, setEvents] = useState<Event[]>([]);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
+  const requestCameraPermission = useCallback(async () => {
+    try {
+      const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
-    })();
-
-    fetchEvents();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'Camera Permission Required',
+          'Please enable camera access to use the QR scanner feature.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Camera permission error:', error);
+      Alert.alert('Error', 'Failed to request camera permission');
+    }
   }, []);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
-      const response = await fetch('YOUR_GO_BACKEND_URL/api/events');
+      setLoading(true);
+      // TODO: Implement your event fetching logic here
+      const response = await fetch('your-api-endpoint');
       const data = await response.json();
       setEvents(data);
     } catch (error) {
       console.error('Error fetching events:', error);
+      Alert.alert('Error', 'Failed to load events');
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const handleEventPress = (event: Event) => {
-    // Navigate to event details
-    console.log('Event pressed:', event);
-  };
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchEvents();
+    setRefreshing(false);
+  }, [fetchEvents]);
 
-  const handleScanPress = () => {
-    if (hasPermission === null) {
-      Alert.alert('Requesting camera permission');
-    } else if (hasPermission === false) {
-      Alert.alert('No access to camera');
-    } else {
-      // Navigate to QR scanner screen
-      console.log('Open QR scanner');
-    }
-  };
+  useEffect(() => {
+    let mounted = true;
 
-  const handleNotificationsPress = () => {
-    // Navigate to notifications screen
-    console.log('Open notifications');
-  };
+    const init = async () => {
+      await requestCameraPermission();
+      if (mounted) {
+        await fetchEvents();
+      }
+    };
 
-  const getFeaturedEvents = () => events.filter(event => event.featured);
-  const getFreeFood = () => events.filter(event => event.tags?.includes('Free Food'));
-  const getClubEvents = () => events.filter(event => event.tags?.includes('Club'));
-  const getTodayEvents = () => events.filter(event => {
-    const today = new Date().toISOString().split('T')[0];
-    return event.date.startsWith(today);
-  });
+    init();
+
+    return () => {
+      mounted = false;
+    };
+  }, [requestCameraPermission, fetchEvents]);
 
   return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <FeaturedCarousel
-          events={getFeaturedEvents()}
-          onEventPress={handleEventPress}
+    <ErrorBoundary>
+      <ScrollView 
+        style={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
+        <QuickActions
+          onScanPress={() => {
+            if (!hasPermission) {
+              requestCameraPermission();
+            }
+            // Handle scan action
+          }}
+          onNotificationsPress={() => {/* Handle notifications */}}
         />
-        <EventSection
-          title="Free Food Events"
-          events={getFreeFood()}
-          onEventPress={handleEventPress}
+        
+        <FeaturedCarousel 
+          events={events.filter(e => e.is_featured)}
+          onEventPress={(event) => {/* Handle event press */}}
         />
+        
         <EventSection
-          title="Club Events"
-          events={getClubEvents()}
-          onEventPress={handleEventPress}
-        />
-        <EventSection
-          title="Happening Today"
-          events={getTodayEvents()}
-          onEventPress={handleEventPress}
+          title="Upcoming Events"
+          events={events.filter(e => new Date(e.start_time) > new Date())}
+          loading={loading}
         />
       </ScrollView>
-      <QuickActions
-        onScanPress={handleScanPress}
-        onNotificationsPress={handleNotificationsPress}
-      />
-    </View>
+    </ErrorBoundary>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
 });

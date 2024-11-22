@@ -31,7 +31,7 @@ export function NotificationList({
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2e6ddf" />
+        <ActivityIndicator size={36} color="#2e6ddf" />
       </View>
     );
   }

@@ -23,7 +23,7 @@ export function RecurrenceSelector({ value, onChange, eventStartDate }: Props) {
       event_id: value?.event_id || '',
       recurrence_pattern: pattern,
       recurrence_interval: value?.recurrence_interval || 1,
-      recurrence_end_date: value?.recurrence_end_date || new Date(eventStartDate).toISOString(),
+      recurrence_end_time: value?.recurrence_end_time || new Date(eventStartDate).toISOString(),
     });
   };
 
@@ -69,11 +69,11 @@ export function RecurrenceSelector({ value, onChange, eventStartDate }: Props) {
           <View style={styles.endDateContainer}>
             <Text style={styles.label}>End Date</Text>
             <DateTimePicker
-              value={new Date(value.recurrence_end_date)}
+              value={new Date(value.recurrence_end_time)}
               onChange={(date) =>
                 onChange({
                   ...value,
-                  recurrence_end_date: date.toISOString(),
+                  recurrence_end_time: date.toISOString(),
                 })
               }
               minimumDate={new Date(eventStartDate)}

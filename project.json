@@ -41,5 +41,16 @@
     "lint": {
       "executor": "@nx/eslint:lint"
     }
+  },
+  "expo": {
+    "plugins": [
+      [
+        "expo-build-properties",
+        {
+          "newArchEnabled": true,
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access camera."
+        }
+      ]
+    ]
   }
 }

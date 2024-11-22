@@ -60,18 +60,19 @@ export function FilterSheet({ filters, onFiltersChange }: Props) {
             mode="range"
             startDate={filters.dateRange.start ? dayjs(filters.dateRange.start) : null}
             endDate={filters.dateRange.end ? dayjs(filters.dateRange.end) : null}
-            onChange={({ startDate, endDate }) => 
+            onChange={({ startDate, endDate }) =>
               onFiltersChange({
                 ...filters,
                 dateRange: {
-                  start: startDate ? startDate.toDate() : null,
-                  end: endDate ? endDate.toDate() : null
+                  start: startDate ? dayjs(startDate).toDate() : null, // Explicit conversion
+                  end: endDate ? dayjs(endDate).toDate() : null // Explicit conversion
                 }
               })
             }
             selectedItemColor="#0047FF"
             displayFullDays
           />
+
 
           <Text style={styles.sectionTitle}>Price Range</Text>
           <Slider

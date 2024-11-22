@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "YourAppName",
+    "slug": "your-app-slug",
+    "version": "1.0.0",
+    "sdkVersion": "52.0.0",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-build-properties",
+      "expo-barcode-scanner",
+      "expo-secure-store"
+    ]
+  }
+}

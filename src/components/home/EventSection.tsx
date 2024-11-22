@@ -5,6 +5,7 @@ import { Event } from '../../types';
 interface Props {
   title: string;
   events: Event[];
+  loading: boolean;
   onEventPress: (event: Event) => void;
 }
 
@@ -15,13 +16,13 @@ export function EventSection({ title, events, onEventPress }: Props) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {events.map((event) => (
           <Pressable
-            key={event.id}
+            key={event.event_id}
             style={styles.eventCard}
             onPress={() => onEventPress(event)}
           >
             <Text style={styles.eventTitle}>{event.title}</Text>
             <Text style={styles.eventDate}>
-              {new Date(event.date).toLocaleDateString()}
+              {new Date(event.start_time).toLocaleDateString()}
             </Text>
             {event.tags && (
               <View style={styles.tagContainer}>
