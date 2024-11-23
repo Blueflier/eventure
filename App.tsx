@@ -29,11 +29,13 @@ function NavigationWrapper() {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!session ? (
+        {/* {!session ? (
           <Stack.Screen name="Auth" component={AuthNavigator} />
         ) : (
           <Stack.Screen name="Main" component={DrawerNavigator} />
-        )}
+        )} */}
+        <Stack.Screen name="Main" component={DrawerNavigator} />
+
       </Stack.Navigator>
       <StatusBar style="auto" />
     </NavigationContainer>

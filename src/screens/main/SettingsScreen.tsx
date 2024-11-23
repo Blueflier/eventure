@@ -5,7 +5,6 @@ import { SecuritySettings } from '../../components/settings/SecuritySettings';
 import { NotificationPreferences } from '../../components/settings/NotificationPreferences';
 import { DisplayPreferences } from '../../components/settings/DisplayPreferences';
 import { PrivacySettings } from '../../components/settings/PrivacySettings';
-import { supabase } from '../../lib/supabase';
 import { UserSettings } from '../../types';
 
 export default function SettingsScreen() {
@@ -36,16 +35,18 @@ export default function SettingsScreen() {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('*')
-        .eq('user_id', session?.user?.id)
-        .single();
-
-      if (error) throw error;
-      if (data) setSettings(data);
+      const response = await fetch(`${process.env.MY_GOLANG_URL}/api/settings/${session?.user?.id}`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch settings');
+      const data = await response.json();
+      setSettings(data);
     } catch (error) {
       console.error('Error fetching settings:', error);
+      Alert.alert('Error', 'Failed to load settings');
     }
   };
 
@@ -58,11 +59,16 @@ export default function SettingsScreen() {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from('user_settings')
-        .upsert(updatedSettings);
+      const response = await fetch(`${process.env.MY_GOLANG_URL}/api/settings`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedSettings),
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to update settings');
       setSettings(updatedSettings);
       Alert.alert('Success', 'Settings updated successfully');
     } catch (error) {

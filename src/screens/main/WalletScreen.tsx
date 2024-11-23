@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { WalletBalance } from '../../components/wallet/WalletBalance';
 import { CurrencyPackages } from '../../components/wallet/CurrencyPackages';
 import { TransactionHistory } from '../../components/wallet/TransactionHistory';
-import { supabase } from '../../lib/supabase';
 import { Wallet } from '../../types';
 
 export default function WalletScreen() {
@@ -20,13 +19,15 @@ export default function WalletScreen() {
 
   const fetchWallet = async () => {
     try {
-      const { data, error } = await supabase
-        .from('wallets')
-        .select('*')
-        .eq('user_id', session?.user.id)
-        .single();
-
-      if (error) throw error;
+      const response = await fetch('YOUR_GO_BACKEND_URL/api/wallet', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch wallet');
+      const data = await response.json();
       setWallet(data);
     } catch (error) {
       console.error('Error fetching wallet:', error);

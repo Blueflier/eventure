@@ -6,8 +6,12 @@ import { EventSection } from '../../components/home/EventSection';
 import { QuickActions } from '../../components/home/QuickActions';
 import { Camera } from 'expo-camera';
 import { ErrorBoundary } from '../../components/common/ErrorBoundary';
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native';
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
@@ -69,6 +73,32 @@ export default function HomeScreen() {
     };
   }, [requestCameraPermission, fetchEvents]);
 
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            onPress={() => {
+              if (!hasPermission) {
+                requestCameraPermission();
+              }
+              // Handle scan action
+            }}
+            style={styles.headerButton}
+          >
+            <Ionicons name="qr-code-outline" size={24} color="#000" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => {/* Handle notifications */}}
+            style={styles.headerButton}
+          >
+            <Ionicons name="notifications-outline" size={24} color="#000" />
+          </TouchableOpacity>
+        </View>
+      ),
+    });
+  }, [navigation, hasPermission, requestCameraPermission]);
+
   return (
     <ErrorBoundary>
       <ScrollView 
@@ -106,5 +136,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    paddingRight: 10,
+  },
+  headerButton: {
+    marginLeft: 15,
   },
 });

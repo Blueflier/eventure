@@ -18,7 +18,7 @@ export function SupportTicket() {
 
     setLoading(true);
     try {
-      const response = await fetch('YOUR_GO_BACKEND_URL/api/support-tickets', {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_GO_BACKEND_URL}/api/users/${session?.user.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
