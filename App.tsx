@@ -1,21 +1,17 @@
 import 'react-native-url-polyfill/auto';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { ErrorBoundary } from './src/components/common/ErrorBoundary';
-import AuthNavigator from './src/navigation/AuthNavigator';
-import DrawerNavigator from './src/navigation/DrawerNavigator';
+import RootNavigator from './src/navigation/RootNavigator';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
-const Stack = createNativeStackNavigator();
-
 function NavigationWrapper() {
-  const { session, loading } = useAuth();
+  const { loading } = useAuth();
 
   useEffect(() => {
     if (!loading) {
@@ -28,15 +24,7 @@ function NavigationWrapper() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {/* {!session ? (
-          <Stack.Screen name="Auth" component={AuthNavigator} />
-        ) : (
-          <Stack.Screen name="Main" component={DrawerNavigator} />
-        )} */}
-        <Stack.Screen name="Main" component={DrawerNavigator} />
-
-      </Stack.Navigator>
+      <RootNavigator />
       <StatusBar style="auto" />
     </NavigationContainer>
   );

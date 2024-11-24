@@ -3,15 +3,18 @@ import { View, StyleSheet, ScrollView, Alert, RefreshControl } from 'react-nativ
 import { Event } from '../../types';
 import { FeaturedCarousel } from '../../components/home/FeaturedCarousel';
 import { EventSection } from '../../components/home/EventSection';
-import { QuickActions } from '../../components/home/QuickActions';
 import { Camera } from 'expo-camera';
 import { ErrorBoundary } from '../../components/common/ErrorBoundary';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { MainStackParamList } from '../../types/navigation';
+
+type HomeScreenNavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
 export default function HomeScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<HomeScreenNavigationProp>();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
@@ -81,15 +84,16 @@ export default function HomeScreen() {
             onPress={() => {
               if (!hasPermission) {
                 requestCameraPermission();
+                return;
               }
-              // Handle scan action
+              navigation.navigate('EventQRScannerScreen');
             }}
             style={styles.headerButton}
           >
             <Ionicons name="qr-code-outline" size={24} color="#000" />
           </TouchableOpacity>
           <TouchableOpacity 
-            onPress={() => {/* Handle notifications */}}
+            onPress={() => navigation.navigate('NotificationsScreen')}
             style={styles.headerButton}
           >
             <Ionicons name="notifications-outline" size={24} color="#000" />
@@ -107,16 +111,6 @@ export default function HomeScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
-        <QuickActions
-          onScanPress={() => {
-            if (!hasPermission) {
-              requestCameraPermission();
-            }
-            // Handle scan action
-          }}
-          onNotificationsPress={() => {/* Handle notifications */}}
-        />
-        
         <FeaturedCarousel 
           events={events.filter(e => e.is_featured)}
           onEventPress={(event) => {/* Handle event press */}}
@@ -126,6 +120,11 @@ export default function HomeScreen() {
           title="Upcoming Events"
           events={events.filter(e => new Date(e.start_time) > new Date())}
           loading={loading}
+          onEventPress={(event) => 
+            navigation.navigate('EventDetailsScreen', { 
+              eventId: event.event_id
+            })
+          }
         />
       </ScrollView>
     </ErrorBoundary>

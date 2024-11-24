@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Alert } from 'react-native';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { Camera, CameraType, useCameraPermissions } from 'expo-camera';
 import { useNavigation } from '@react-navigation/native';
 import { useTicketQR } from '../../hooks/useTicketQR';
 import { Button } from '../../components/common/Button';
@@ -13,7 +13,7 @@ export default function ScanTicketScreen() {
 
   useEffect(() => {
     (async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
+      const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
     })();
   }, []);
@@ -48,7 +48,7 @@ export default function ScanTicketScreen() {
 
   return (
     <View style={styles.container}>
-      <BarCodeScanner
+      <Camera
         onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
         style={styles.scanner}
       />

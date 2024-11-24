@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import HomeScreen from '../screens/main/HomeScreen';
+import DrawerNavigator from './DrawerNavigator';
 import SearchScreen from '../screens/main/SearchScreen';
 import MyEventsScreen from '../screens/main/MyEventsScreen';
 
@@ -39,7 +39,7 @@ export default function TabNavigator() {
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={DrawerNavigator}
         options={{
           tabBarLabel: 'Home',
           headerShown: false,

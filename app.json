@@ -7,7 +7,6 @@
     "newArchEnabled": true,
     "plugins": [
       "expo-build-properties",
-      "expo-barcode-scanner",
       "expo-secure-store"
     ]
   }

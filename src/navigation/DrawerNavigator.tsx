@@ -1,51 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { TouchableOpacity } from 'react-native';
+import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigationState } from '@react-navigation/native';
-import TabNavigator from './TabNavigator';
-import WalletScreen from '../screens/main/WalletScreen';
+import HomeScreen from '../screens/main/HomeScreen';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import SettingsScreen from '../screens/main/SettingsScreen';
 import HelpSupportScreen from '../screens/main/HelpSupportScreen';
+import WalletScreen from '../screens/main/WalletScreen';
 import { CustomDrawerContent } from '../components/navigation/CustomDrawerContent';
+import { QuickActions } from '../components/home/QuickActions';
+import { useQRScanner } from '../hooks/useQRScanner';
+import { useNotificationHandler } from '../hooks/useNotificationHandler';
 
 const Drawer = createDrawerNavigator();
 
 export default function DrawerNavigator() {
-  const [activeTabTitle, setActiveTabTitle] = useState('Home');
-  const navigationState = useNavigationState(state => state);
-
-  // Function to get current tab route name
-  const getCurrentTabTitle = () => {
-    if (navigationState) {
-      // Find the MainTabs route
-      const mainTabsRoute = navigationState.routes.find(route => route.name === 'MainTabs');
-      if (mainTabsRoute?.state?.routes) {
-        // Get active tab route
-        const activeTabRoute = mainTabsRoute.state.routes[mainTabsRoute.state.index || 0];
-        return activeTabRoute?.name || 'Home';
-      }
-    }
-    return 'Home';
-  };
-
-  // Update title when navigation state changes
-  useEffect(() => {
-    setActiveTabTitle(getCurrentTabTitle());
-  }, [navigationState]);
-
-  const MainTabsHeaderRight = () => (
-    <>
-      <TouchableOpacity style={{ marginRight: 15 }} onPress={() => {/* Handle notifications */}}>
-        <Ionicons name="notifications-outline" size={24} color="#333" />
-      </TouchableOpacity>
-      <TouchableOpacity style={{ marginRight: 15 }} onPress={() => {/* Handle QR scan */}}>
-        <Ionicons name="scan-outline" size={24} color="#333" />
-      </TouchableOpacity>
-
-    </>
-  );
+  const { handleScanPress } = useQRScanner();
+  const { handleNotificationsPress } = useNotificationHandler();
 
   return (
     <Drawer.Navigator
@@ -58,12 +28,15 @@ export default function DrawerNavigator() {
       }}
     >
       <Drawer.Screen
-        name="MainTabs"
-        component={TabNavigator}
+        name="HomeContent"
+        component={HomeScreen}
         options={{
-          headerShown: true,
-          title: activeTabTitle,
-          headerRight: () => <MainTabsHeaderRight />,
+          headerRight: () => (
+            <QuickActions
+              onScanPress={handleScanPress}
+              onNotificationsPress={handleNotificationsPress}
+            />
+          ),
           drawerIcon: ({ color }) => (
             <Ionicons name="home-outline" size={22} color={color} />
           ),
