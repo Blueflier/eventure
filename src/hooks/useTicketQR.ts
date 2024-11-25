@@ -1,26 +1,17 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { api } from '../utils/api';
 import { TicketQR, QRScanResult } from '../types/TicketQR';
 
 export function useTicketQR() {
-  const { session } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const generateQRCode = async (purchaseId: string): Promise<TicketQR | null> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/tickets/purchases/${purchaseId}/qr`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.post<TicketQR>(`/api/tickets/purchases/${purchaseId}/qr`);
+      
       if (!response.ok) throw new Error('Failed to generate QR code');
-      return await response.json();
+      return response.data ?? null;
     } catch (error) {
       console.error('Error generating QR code:', error);
       return null;
@@ -32,23 +23,15 @@ export function useTicketQR() {
   const validateQRCode = async (qrCode: string): Promise<QRScanResult> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        'YOUR_GO_BACKEND_URL/api/tickets/validate-qr',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({ qr_code: qrCode }),
-        }
+      const response = await api.post<{ message: string; ticketQR: TicketQR }>(
+        '/api/tickets/validate-qr',
+        { qr_code: qrCode }
       );
 
-      const data = await response.json();
       return {
         success: response.ok,
-        message: data.message,
-        ticketQR: data.ticketQR,
+        message: response.data?.message ?? 'Failed to validate QR code',
+        ticketQR: response.data?.ticketQR,
       };
     } catch (error) {
       console.error('Error validating QR code:', error);
@@ -63,17 +46,10 @@ export function useTicketQR() {
 
   const getTicketQRs = async (purchaseId: string): Promise<TicketQR[]> => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/tickets/purchases/${purchaseId}/qr-codes`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.get<TicketQR[]>(`/api/tickets/purchases/${purchaseId}/qr-codes`);
+      
       if (!response.ok) throw new Error('Failed to fetch QR codes');
-      return await response.json();
+      return response.data ?? [];
     } catch (error) {
       console.error('Error fetching QR codes:', error);
       return [];

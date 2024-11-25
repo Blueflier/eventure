@@ -7,6 +7,7 @@ import {
   TargetType,
   ModerationStats,
 } from '../types/Moderation';
+import { api } from '../utils/api';
 
 export function useModeration() {
   const { session } = useAuth();
@@ -20,23 +21,12 @@ export function useModeration() {
   ): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        'YOUR_GO_BACKEND_URL/api/moderation/actions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({
-            action_type: actionType,
-            target_id: targetId,
-            target_type: targetType,
-            reason,
-          }),
-        }
-      );
-
+      const response = await api.post('/api/moderation/actions', {
+        action_type: actionType,
+        target_id: targetId,
+        target_type: targetType,
+        reason,
+      });
       return response.ok;
     } catch (error) {
       console.error('Error performing moderation action:', error);
@@ -53,22 +43,11 @@ export function useModeration() {
   ): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        'YOUR_GO_BACKEND_URL/api/moderation/reports',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({
-            target_id: targetId,
-            target_type: targetType,
-            reason,
-          }),
-        }
-      );
-
+      const response = await api.post('/api/moderation/reports', {
+        target_id: targetId,
+        target_type: targetType,
+        reason,
+      });
       return response.ok;
     } catch (error) {
       console.error('Error reporting content:', error);
@@ -80,17 +59,9 @@ export function useModeration() {
 
   const getPendingReports = async (): Promise<Report[]> => {
     try {
-      const response = await fetch(
-        'YOUR_GO_BACKEND_URL/api/moderation/reports/pending',
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.get<Report[]>('/api/moderation/reports/pending');
       if (!response.ok) throw new Error('Failed to fetch pending reports');
-      return await response.json();
+      return response.data ?? [];
     } catch (error) {
       console.error('Error fetching pending reports:', error);
       return [];
@@ -99,17 +70,14 @@ export function useModeration() {
 
   const getModerationStats = async (): Promise<ModerationStats> => {
     try {
-      const response = await fetch(
-        'YOUR_GO_BACKEND_URL/api/moderation/stats',
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.get<ModerationStats>('/api/moderation/stats');
       if (!response.ok) throw new Error('Failed to fetch moderation stats');
-      return await response.json();
+      return response.data ?? {
+        pendingReports: 0,
+        totalReports: 0,
+        actionsToday: 0,
+        recentActions: [],
+      };
     } catch (error) {
       console.error('Error fetching moderation stats:', error);
       return {
@@ -130,17 +98,11 @@ export function useModeration() {
       if (targetId) params.append('target_id', targetId);
       if (targetType) params.append('target_type', targetType);
 
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/moderation/history?${params}`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
+      const response = await api.get<ModerationLog[]>(
+        `/api/moderation/history?${params}`
       );
-
       if (!response.ok) throw new Error('Failed to fetch moderation history');
-      return await response.json();
+      return response.data ?? [];
     } catch (error) {
       console.error('Error fetching moderation history:', error);
       return [];

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { EngagementType, EngagementStats } from '../types/Engagement';
+import { api } from '../utils/api';
 
 export function useEngagement(eventId: string) {
   const { session } = useAuth();
@@ -16,18 +17,8 @@ export function useEngagement(eventId: string) {
   const trackEngagement = async (type: EngagementType): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/engagements`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({ type }),
-        }
-      );
-
+      const response = await api.post(`/events/${eventId}/engagements`, { type });
+      
       if (!response.ok) throw new Error('Failed to track engagement');
       await fetchEngagementStats();
       return true;
@@ -42,18 +33,12 @@ export function useEngagement(eventId: string) {
   const fetchEngagementStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/engagements/stats`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.get<EngagementStats>(`/events/${eventId}/engagements/stats`);
+      
       if (!response.ok) throw new Error('Failed to fetch engagement stats');
-      const data = await response.json();
-      setStats(data);
+      if (response.data) {
+        setStats(response.data);
+      }
     } catch (error) {
       console.error('Error fetching engagement stats:', error);
     } finally {
@@ -63,18 +48,10 @@ export function useEngagement(eventId: string) {
 
   const getUserEngagements = async (): Promise<EngagementType[]> => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/engagements/user`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.get<{ engagements: any[] }>(`/events/${eventId}/engagements/user`);
+      
       if (!response.ok) throw new Error('Failed to fetch user engagements');
-      const data = await response.json();
-      return data.engagements.map((e: any) => e.type);
+      return response.data?.engagements.map(e => e.type) || [];
     } catch (error) {
       console.error('Error fetching user engagements:', error);
       return [];
@@ -84,17 +61,10 @@ export function useEngagement(eventId: string) {
   const getEngagementHistory = async (type?: EngagementType) => {
     try {
       const queryParams = type ? `?type=${type}` : '';
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/engagements/history${queryParams}`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.get(`/events/${eventId}/engagements/history${queryParams}`);
+      
       if (!response.ok) throw new Error('Failed to fetch engagement history');
-      return await response.json();
+      return response.data || [];
     } catch (error) {
       console.error('Error fetching engagement history:', error);
       return [];

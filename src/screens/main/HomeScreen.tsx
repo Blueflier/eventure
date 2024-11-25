@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../types/navigation';
+import { api } from '../../utils/api';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<MainStackParamList>;
 
@@ -41,10 +42,12 @@ export default function HomeScreen() {
   const fetchEvents = useCallback(async () => {
     try {
       setLoading(true);
-      // TODO: Implement your event fetching logic here
-      const response = await fetch('your-api-endpoint');
-      const data = await response.json();
-      setEvents(data);
+      const response = await api.get<Event[]>('/events');
+      if (response.ok && response.data) {
+        setEvents(response.data);
+      } else {
+        Alert.alert('Error', response.error || 'Failed to load events');
+      }
     } catch (error) {
       console.error('Error fetching events:', error);
       Alert.alert('Error', 'Failed to load events');
@@ -122,7 +125,7 @@ export default function HomeScreen() {
           loading={loading}
           onEventPress={(event) => 
             navigation.navigate('EventDetailsScreen', { 
-              eventId: event.event_id
+              event_id: event.event_id
             })
           }
         />

@@ -15,9 +15,10 @@ export type NotificationType = 'message' | 'event_update' | 'rsvp_confirmation' 
 export type RelatedType = 'event' | 'message' | 'user';
 export type NotificationPriority = 'high' | 'normal';
 
-export interface NotificationPreferences {
-  event_updates: boolean;
-  messages: boolean;
-  reminders: boolean;
-  marketing: boolean;
+export interface NotificationSettings {
+  pushEnabled: boolean;
+  reminderNotifications: boolean;
+  updateNotifications: boolean;
+  messageNotifications: boolean;
+  promotionNotifications: boolean;
 }

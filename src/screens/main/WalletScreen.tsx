@@ -6,6 +6,7 @@ import { WalletBalance } from '../../components/wallet/WalletBalance';
 import { CurrencyPackages } from '../../components/wallet/CurrencyPackages';
 import { TransactionHistory } from '../../components/wallet/TransactionHistory';
 import { Wallet } from '../../types';
+import { api } from '../../utils/api';
 
 export default function WalletScreen() {
   const { session } = useAuth();
@@ -19,16 +20,9 @@ export default function WalletScreen() {
 
   const fetchWallet = async () => {
     try {
-      const response = await fetch('YOUR_GO_BACKEND_URL/api/wallet', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-      });
-      
-      if (!response.ok) throw new Error('Failed to fetch wallet');
-      const data = await response.json();
-      setWallet(data);
+      const response = await api.get<Wallet>('/api/wallet');
+      if (!response.ok) throw new Error(response.error);
+      setWallet(response.data!);
     } catch (error) {
       console.error('Error fetching wallet:', error);
     }
@@ -38,21 +32,15 @@ export default function WalletScreen() {
     try {
       setLoading(true);
 
-      const response = await fetch('YOUR_GO_BACKEND_URL/api/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({
-          amount,
-          currency: wallet?.currency || 'USD',
-          coins,
-          wallet_id: wallet?.wallet_id,
-        }),
+      const response = await api.post('/api/create-payment-intent', {
+        amount,
+        currency: wallet?.currency || 'USD',
+        coins,
+        wallet_id: wallet?.wallet_id,
       });
 
-      const { clientSecret, ephemeralKey, customer } = await response.json();
+      if (!response.ok) throw new Error(response.error);
+      const { clientSecret, ephemeralKey, customer } = response.data;
 
       const { error: initError } = await initPaymentSheet({
         merchantDisplayName: 'Eventure',
@@ -78,7 +66,7 @@ export default function WalletScreen() {
       fetchWallet();
     } catch (error) {
       console.error('Error processing payment:', error);
-      Alert.alert('Error', 'Unable to process payment');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Unable to process payment');
     } finally {
       setLoading(false);
     }

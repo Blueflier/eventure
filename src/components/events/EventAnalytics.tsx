@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { api } from '../../utils/api';
 
 interface Props {
   eventId: number;
@@ -22,11 +23,12 @@ export function EventAnalytics({ eventId }: Props) {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/analytics`
-      );
-      const data = await response.json();
-      setAnalytics(data);
+      const response = await api.get<Analytics>(`/events/${eventId}/analytics`);
+      if (response.ok && response.data) {
+        setAnalytics(response.data);
+      } else {
+        console.error('Error fetching analytics:', response.error);
+      }
     } catch (error) {
       console.error('Error fetching analytics:', error);
     }

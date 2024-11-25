@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { SettingsSection } from './SettingsSection';
+import { api } from '../../utils/api';
 
 export function SecuritySettings() {
   const { session } = useAuth();
@@ -18,19 +19,28 @@ export function SecuritySettings() {
       return;
     }
 
+    if (!currentPassword || !newPassword) {
+      Alert.alert('Error', 'Please fill in all password fields');
+      return;
+    }
+
     try {
       setLoading(true);
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
+      const response = await api.put('/auth/password', {
+        currentPassword,
+        newPassword,
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to update password');
+      }
+
       Alert.alert('Success', 'Password updated successfully');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
-      Alert.alert('Error', 'Failed to update password');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update password');
     } finally {
       setLoading(false);
     }

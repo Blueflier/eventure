@@ -1,9 +1,11 @@
 export type RootStackParamList = {
-  Auth: undefined;
   MainTabs: undefined;
   NotificationsScreen: undefined;
   EventQRScannerScreen: undefined;
-  EventDetailsScreen: { eventId: string };
+  EventDetailsScreen: {
+    event_id: string;
+  };
+  // Add other screens here...
 };
 
 export type AuthStackParamList = {

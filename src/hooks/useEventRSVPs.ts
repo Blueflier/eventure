@@ -1,25 +1,17 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { RSVP } from '../types/RSVP';
+import { api } from '../utils/api';
 
 export function useEventRSVPs(eventId: string) {
-  const { session } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const getRSVPs = async (): Promise<RSVP[]> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/rsvps`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to fetch RSVPs');
-      return await response.json();
+      const response = await api.get<RSVP[]>(`/api/events/${eventId}/rsvps`);
+      
+      if (!response.ok) throw new Error(response.error);
+      return response.data ?? [];
     } catch (error) {
       console.error('Error fetching RSVPs:', error);
       return [];
@@ -30,18 +22,10 @@ export function useEventRSVPs(eventId: string) {
 
   const getRSVPCount = async (): Promise<number> => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/rsvps/count`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to fetch RSVP count');
-      const data = await response.json();
-      return data.count;
+      const response = await api.get<{ count: number }>(`/api/events/${eventId}/rsvps/count`);
+      
+      if (!response.ok) throw new Error(response.error);
+      return response.data?.count ?? 0;
     } catch (error) {
       console.error('Error fetching RSVP count:', error);
       return 0;

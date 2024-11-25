@@ -28,7 +28,7 @@ export default function DrawerNavigator() {
       }}
     >
       <Drawer.Screen
-        name="HomeContent"
+        name="Eventure"
         component={HomeScreen}
         options={{
           headerRight: () => (

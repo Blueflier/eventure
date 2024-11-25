@@ -25,7 +25,8 @@ export default function MainNavigator() {
         component={EventQRScannerScreen}
         options={{ 
           title: 'Scan QR Code',
-          headerBackTitle: 'Back'
+          headerBackTitle: 'Back',
+          headerShown: false,
         }}
       />
       <Stack.Screen

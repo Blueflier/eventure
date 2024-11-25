@@ -1,53 +1,51 @@
-import React, { useState } from 'react';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import React, { useState, useEffect } from 'react';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { StyleSheet, Text, TouchableOpacity, View, Button } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useAttendance } from '../../hooks/useAttendance';
 
 export default function EventQRScannerScreen() {
-  const [facing, setFacing] = useState<CameraType>('back');
   const [permission, requestPermission] = useCameraPermissions();
+
   const [scanned, setScanned] = useState(false);
 
+
+
+  const handleBarCodeScanned = ({ type, data }: { type: string; data: string }) => {
+    setScanned(true);
+    // Your existing scan handling logic here
+    console.log({ type, data });
+  };
+
   if (!permission) {
+    // Camera permissions are still loading.
     return <View />;
   }
 
   if (!permission.granted) {
+    // Camera permissions are not granted yet.
     return (
       <View style={styles.container}>
-        <Text style={styles.message}>We need your permission to scan QR codes</Text>
-        <Button onPress={requestPermission} title="Grant Permission" />
+        <Text style={styles.message}>We need your permission to show the camera</Text>
+        <Button onPress={requestPermission} title="grant permission" />
       </View>
     );
   }
 
-  function toggleCameraFacing() {
-    setFacing(current => (current === 'back' ? 'front' : 'back'));
-  }
-
-  const handleBarCodeScanned = (result: any) => {
-    setScanned(true);
-    // Your existing scan handling logic here
-    console.log(result);
-  };
-
   return (
     <View style={styles.container}>
       <CameraView 
-        style={styles.camera} 
-        facing={facing}
+        style={styles.camera}
         onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
         barcodeScannerSettings={{
-          barCodeTypes: ['qr'],
+          barcodeTypes: ["qr"],
         }}
       >
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-            <Text style={styles.text}>Flip Camera</Text>
-          </TouchableOpacity>
-        </View>
+        
       </CameraView>
+      {scanned && (
+        <Button title={'Tap to Scan Again'} onPress={() => setScanned(false)} />
+      )}
     </View>
   );
 }

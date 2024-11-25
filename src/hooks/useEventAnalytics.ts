@@ -1,25 +1,17 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { EventAnalytics, AnalyticsOverview } from '../types/EventAnalytics';
+import { api } from '../utils/api';
 
 export function useEventAnalytics(eventId: string) {
-  const { session } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const getAnalytics = async (): Promise<AnalyticsOverview | null> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/analytics`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.get<AnalyticsOverview>(`/events/${eventId}/analytics`);
+      
       if (!response.ok) throw new Error('Failed to fetch analytics');
-      return await response.json();
+      return response.data || null;
     } catch (error) {
       console.error('Error fetching analytics:', error);
       return null;
@@ -30,15 +22,8 @@ export function useEventAnalytics(eventId: string) {
 
   const trackView = async (): Promise<void> => {
     try {
-      await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/analytics/view`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
+      const response = await api.post(`/events/${eventId}/analytics/view`);
+      if (!response.ok) throw new Error('Failed to track view');
     } catch (error) {
       console.error('Error tracking view:', error);
     }
@@ -46,17 +31,10 @@ export function useEventAnalytics(eventId: string) {
 
   const getAnalyticsTrends = async (days: number = 7) => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/analytics/trends?days=${days}`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.get(`/events/${eventId}/analytics/trends?days=${days}`);
+      
       if (!response.ok) throw new Error('Failed to fetch analytics trends');
-      return await response.json();
+      return response.data || [];
     } catch (error) {
       console.error('Error fetching analytics trends:', error);
       return [];

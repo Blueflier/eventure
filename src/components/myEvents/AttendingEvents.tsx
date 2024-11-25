@@ -3,6 +3,7 @@ import { View, StyleSheet, SectionList, Text } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { EventListItem } from './EventListItem';
 import { Event } from '../../types';
+import { api } from '../../utils/api';
 
 export function AttendingEvents() {
   const { session } = useAuth();
@@ -18,22 +19,18 @@ export function AttendingEvents() {
 
   const fetchAttendingEvents = async () => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/users/${session?.user.id}/attending-events`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-      const events = await response.json();
+      const response = await api.get<Event[]>(`/api/users/${session?.user.id}/attending-events`);
       
+      if (!response.ok || !response.data) {
+        throw new Error(response.error || 'Failed to fetch events');
+      }
+
       const now = new Date();
-      const upcoming = events.filter(
-        (event: Event) => new Date(event.startDate) > now
+      const upcoming = response.data.filter(
+        (event: Event) => new Date(event.start_time) > now
       );
-      const past = events.filter(
-        (event: Event) => new Date(event.startDate) <= now
+      const past = response.data.filter(
+        (event: Event) => new Date(event.start_time) <= now
       );
 
       setSections([
@@ -50,7 +47,7 @@ export function AttendingEvents() {
   return (
     <SectionList
       sections={sections}
-      keyExtractor={(item) => item.id.toString()}
+      keyExtractor={(item) => item.event_id.toString()}
       renderItem={({ item }) => <EventListItem event={item} />}
       renderSectionHeader={({ section: { title } }) => (
         <View style={styles.sectionHeader}>

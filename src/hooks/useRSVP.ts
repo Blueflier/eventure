@@ -1,49 +1,22 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { api } from '../utils/api';
 import { RSVP, RSVPResponse } from '../types/RSVP';
 
 export function useRSVP() {
-  const { session } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const checkRSVPStatus = async (eventId: string): Promise<RSVP | null> => {
-    try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/rsvp-status`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-      const data = await response.json();
-      return data.rsvp || null;
-    } catch (error) {
-      console.error('Error checking RSVP status:', error);
-      return null;
-    }
+    const response = await api.get<{ rsvp: RSVP }>(`/events/${eventId}/rsvp-status`);
+    return response.ok && response.data ? response.data.rsvp : null;
   };
 
   const handleRSVP = async (eventId: string): Promise<RSVPResponse> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/rsvp`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-      
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      return {
+      const response = await api.post<RSVPResponse>(`/events/${eventId}/rsvp`);
+      return response.ok && response.data ? response.data : {
         success: false,
-        message: 'Failed to RSVP. Please try again.',
+        message: response.error || 'Failed to RSVP. Please try again.',
       };
     } finally {
       setLoading(false);
@@ -53,22 +26,10 @@ export function useRSVP() {
   const cancelRSVP = async (eventId: string): Promise<RSVPResponse> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/rsvp`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-      
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      return {
+      const response = await api.delete<RSVPResponse>(`/events/${eventId}/rsvp`);
+      return response.ok && response.data ? response.data : {
         success: false,
-        message: 'Failed to cancel RSVP. Please try again.',
+        message: response.error || 'Failed to cancel RSVP. Please try again.',
       };
     } finally {
       setLoading(false);

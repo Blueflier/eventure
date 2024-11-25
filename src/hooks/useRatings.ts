@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Rating, RatingStats } from '../types/Rating';
+import { api } from '../utils/api';
 
 export function useRatings(organizerId: string) {
   const { session } = useAuth();
@@ -14,19 +15,12 @@ export function useRatings(organizerId: string) {
   const submitRating = async (rating: number, comment: string): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/organizers/${organizerId}/ratings`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({ rating, comment }),
-        }
+      const response = await api.post<void>(
+        `/api/organizers/${organizerId}/ratings`,
+        { rating, comment }
       );
-
-      if (!response.ok) throw new Error('Failed to submit rating');
+      
+      if (!response.ok) throw new Error(response.error);
       await fetchRatingStats();
       return true;
     } catch (error) {
@@ -39,18 +33,14 @@ export function useRatings(organizerId: string) {
 
   const fetchRatingStats = async () => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/organizers/${organizerId}/ratings/stats`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
+      const response = await api.get<RatingStats>(
+        `/api/organizers/${organizerId}/ratings/stats`
       );
-
-      if (!response.ok) throw new Error('Failed to fetch rating stats');
-      const data = await response.json();
-      setStats(data);
+      
+      if (!response.ok) throw new Error(response.error);
+      if (response.data) {
+        setStats(response.data);
+      }
     } catch (error) {
       console.error('Error fetching rating stats:', error);
     }
@@ -58,18 +48,12 @@ export function useRatings(organizerId: string) {
 
   const getUserRating = async (): Promise<Rating | null> => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/organizers/${organizerId}/ratings/user`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
+      const response = await api.get<{ rating: Rating }>(
+        `/api/organizers/${organizerId}/ratings/user`
       );
-
-      if (!response.ok) throw new Error('Failed to fetch user rating');
-      const data = await response.json();
-      return data.rating;
+      
+      if (!response.ok) throw new Error(response.error);
+      return response.data?.rating || null;
     } catch (error) {
       console.error('Error fetching user rating:', error);
       return null;

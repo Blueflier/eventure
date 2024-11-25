@@ -5,6 +5,7 @@ import { CreateEventWizard } from '../../components/events/create/CreateEventWiz
 import { EventPreview } from '../../components/events/create/EventPreview';
 import { useAuth } from '../../contexts/AuthContext';
 import { Event } from '../../types';
+import { api } from '../../utils/api';
 
 export default function CreateEventScreen() {
   const navigation = useNavigation();
@@ -13,30 +14,23 @@ export default function CreateEventScreen() {
   const [eventData, setEventData] = useState<Partial<Event>>({
     title: '',
     description: '',
-    startDate: new Date().toISOString(),
-    endDate: new Date().toISOString(),
-    location: undefined,
+    start_time: new Date().toISOString(),
+    end_time: new Date().toISOString(),
+    location_text: '',
     price: 0,
     images: [],
     tags: [],
-    createdBy: session?.user?.id,
+    organizer_id: session?.user?.id,
   });
 
   const handleSave = async (isDraft: boolean = true) => {
     try {
-      const response = await fetch('YOUR_GO_BACKEND_URL/api/events', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({
-          ...eventData,
-          status: isDraft ? 'draft' : 'published',
-        }),
+      const response = await api.post('/api/events', {
+        ...eventData,
+        status: isDraft ? 'draft' : 'published',
       });
 
-      if (!response.ok) throw new Error('Failed to save event');
+      if (!response.ok) throw new Error(response.error || 'Failed to save event');
 
       navigation.goBack();
     } catch (error) {

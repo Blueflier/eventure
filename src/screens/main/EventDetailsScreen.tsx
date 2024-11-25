@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, Share, Alert } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import { ImageGallery } from '../../components/events/ImageGallery';
 import { EventInfo } from '../../components/events/EventInfo';
 import { RSVPButton } from '../../components/events/RSVPButton';
@@ -12,32 +12,38 @@ import { Button } from '../../components/common/Button';
 import { useAuth } from '../../contexts/AuthContext';
 import { Event } from '../../types';
 import { RSVP } from '../../types/RSVP';
+import { api } from '../../utils/api';
+import { useNavigation } from '@react-navigation/native';
+import { RootStackParamList } from '../../types/navigation';
 
-export default function EventDetailsScreen() {
-  const route = useRoute();
+type EventDetailsScreenProps = {
+  route: RouteProp<RootStackParamList, 'EventDetailsScreen'>;
+};
+
+export default function EventDetailsScreen({ route }: EventDetailsScreenProps) {
+  const navigation = useNavigation();
   const { session } = useAuth();
   const [event, setEvent] = useState<Event | null>(null);
   const [rsvp, setRSVP] = useState<RSVP | null>(null);
-  const isOrganizer = event?.createdBy === session?.user?.id;
+  
+  const { event_id } = route.params;
+  const isOrganizer = event?.organizer_id === session?.user?.id;
 
   useEffect(() => {
     fetchEventDetails();
-  }, []);
+  }, [route.params?.event_id]);
 
   const fetchEventDetails = async () => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${route.params?.eventId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-      const data = await response.json();
-      setEvent(data);
+      const response = await api.get<Event>(`/events/${event_id}`);
+      if (response.ok && response.data) {
+        setEvent(response.data);
+      } else {
+        Alert.alert('Error', response.error || 'Failed to fetch event details');
+      }
     } catch (error) {
       console.error('Error fetching event details:', error);
+      Alert.alert('Error', 'Failed to load event details');
     }
   };
 
@@ -45,7 +51,7 @@ export default function EventDetailsScreen() {
     try {
       await Share.share({
         message: `Check out ${event?.title} on Eventure!`,
-        url: `YOUR_APP_URL/events/${event?.id}`,
+        url: `YOUR_APP_URL/events/${event?.event_id}`,
       });
     } catch (error) {
       console.error('Error sharing event:', error);
@@ -59,6 +65,36 @@ export default function EventDetailsScreen() {
     }
   };
 
+  const handleDeleteEvent = async () => {
+    try {
+      const response = await api.delete(`/events/${event?.event_id}`);
+      if (response.ok) {
+        Alert.alert('Success', 'Event successfully deleted');
+        navigation.goBack();
+      } else {
+        Alert.alert('Error', response.error || 'Failed to delete event');
+      }
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      Alert.alert('Error', 'Failed to delete event');
+    }
+  };
+
+  const handleFeatureEvent = async () => {
+    try {
+      const response = await api.put(`/events/${event?.event_id}/feature`);
+      if (response.ok) {
+        Alert.alert('Success', 'Event has been featured');
+        fetchEventDetails(); // Refresh event details
+      } else {
+        Alert.alert('Error', response.error || 'Failed to feature event');
+      }
+    } catch (error) {
+      console.error('Error featuring event:', error);
+      Alert.alert('Error', 'Failed to feature event');
+    }
+  };
+
   if (!event) return null;
 
   return (
@@ -69,7 +105,7 @@ export default function EventDetailsScreen() {
         
         {!isOrganizer && (
           <RSVPButton
-            eventId={event.id}
+            eventId={event?.event_id}
             onRSVPChange={handleRSVPChange}
           />
         )}
@@ -80,25 +116,25 @@ export default function EventDetailsScreen() {
           rsvp={rsvp}
         />
         
-        <OrganizerProfile organizerId={event.createdBy} />
+        <OrganizerProfile organizerId={event?.organizer_id} />
         
         <RoleGuard roles={['admin', 'moderator']}>
           <View style={styles.adminControls}>
             <Button
               title="Delete Event"
-              onPress={() => {/* Handle delete */}}
+              onPress={handleDeleteEvent}
               variant="outline"
               style={styles.deleteButton}
             />
             <Button
               title="Feature Event"
-              onPress={() => {/* Handle feature */}}
+              onPress={handleFeatureEvent}
               style={styles.featureButton}
             />
           </View>
         </RoleGuard>
 
-        {isOrganizer && <EventAnalytics eventId={event.id} />}
+        {isOrganizer && <EventAnalytics eventId={Number(event?.event_id)} />}
       </View>
     </ScrollView>
   );

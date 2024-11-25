@@ -5,6 +5,7 @@ import { FilterSheet } from '../../components/search/FilterSheet';
 import { SearchResults } from '../../components/search/SearchResults';
 import { useDebounce } from '../../hooks/useDebounce';
 import { Event } from '../../types';
+import { api } from '../../utils/api';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
@@ -29,13 +30,15 @@ export default function SearchScreen() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/search?q=${encodeURIComponent(
-          debouncedSearch
-        )}&${new URLSearchParams(filters as any).toString()}`
-      );
-      const data = await response.json();
-      setResults(data);
+      const queryParams = new URLSearchParams({
+        q: debouncedSearch,
+        ...filters as any
+      }).toString();
+      
+      const response = await api.get<Event[]>(`/api/events/search?${queryParams}`);
+      if (response.ok && response.data) {
+        setResults(response.data);
+      }
     } catch (error) {
       console.error('Search error:', error);
     } finally {
@@ -50,11 +53,10 @@ export default function SearchScreen() {
     }
 
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/suggestions?q=${encodeURIComponent(query)}`
-      );
-      const data = await response.json();
-      setSuggestions(data);
+      const response = await api.get<string[]>(`/api/events/suggestions?q=${encodeURIComponent(query)}`);
+      if (response.ok && response.data) {
+        setSuggestions(response.data);
+      }
     } catch (error) {
       console.error('Suggestions error:', error);
     }

@@ -57,7 +57,7 @@ export default function TabNavigator() {
         component={MyEventsScreen}
         options={{
           tabBarLabel: 'My Events',
-          title: 'My Events',
+          title: 'Eventure',
         }}
       />
     </Tab.Navigator>

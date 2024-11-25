@@ -5,14 +5,21 @@ import { RatingModal } from '../ratings/RatingModal';
 import { RatingStats } from '../ratings/RatingStats';
 import { StarRating } from '../ratings/StarRating';
 import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../utils/api';
 
 interface Props {
   organizerId: string;
 }
 
+interface Organizer {
+  id: string;
+  name: string;
+  avatarUrl: string;
+}
+
 export function OrganizerProfile({ organizerId }: Props) {
   const { session } = useAuth();
-  const [organizer, setOrganizer] = useState<any>(null);
+  const [organizer, setOrganizer] = useState<Organizer | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const { loading, stats, submitRating, fetchRatingStats } = useRatings(organizerId);
 
@@ -23,9 +30,10 @@ export function OrganizerProfile({ organizerId }: Props) {
 
   const fetchOrganizerDetails = async () => {
     try {
-      const response = await fetch(`YOUR_GO_BACKEND_URL/api/users/${organizerId}`);
-      const data = await response.json();
-      setOrganizer(data);
+      const response = await api.get<Organizer>(`/users/${organizerId}`);
+      if (response.ok && response.data) {
+        setOrganizer(response.data);
+      }
     } catch (error) {
       console.error('Error fetching organizer details:', error);
     }

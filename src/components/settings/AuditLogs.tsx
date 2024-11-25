@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { format } from 'date-fns';
 import { SettingsSection } from './SettingsSection';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../utils/api';
 
 interface Props {
   userId?: string;
@@ -27,15 +27,13 @@ export function AuditLogs({ userId }: Props) {
 
   const fetchAuditLogs = async () => {
     try {
-      const { data, error } = await supabase
-        .from('audit_logs')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(50);
+      const response = await api.get(
+        `/api/audit-logs/${userId}?limit=50&sort=created_at:desc`
+      );
 
-      if (error) throw error;
-      setLogs(data);
+      if (response.ok) {
+        setLogs(response.data as AuditLog[]);
+      }
     } catch (error) {
       console.error('Error fetching audit logs:', error);
     } finally {

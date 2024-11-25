@@ -1,87 +1,46 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { api } from '../utils/api';
 import { EventPromotion, CreatePromotionRequest, PromotionPackage } from '../types/EventPromotion';
 
 export function useEventPromotion() {
-  const { session } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const getPromotionPackages = async (): Promise<PromotionPackage[]> => {
-    try {
-      const response = await fetch(
-        'YOUR_GO_BACKEND_URL/api/promotions/packages',
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to fetch promotion packages');
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching promotion packages:', error);
+    const response = await api.get<PromotionPackage[]>('/api/promotions/packages');
+    if (!response.ok) {
+      console.error('Error fetching promotion packages:', response.error);
       return [];
     }
+    return response.data ?? [];
   };
 
   const createPromotion = async (request: CreatePromotionRequest): Promise<EventPromotion | null> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        'YOUR_GO_BACKEND_URL/api/promotions',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify(request),
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to create promotion');
-      return await response.json();
-    } catch (error) {
-      console.error('Error creating promotion:', error);
-      return null;
+      const response = await api.post<EventPromotion>('/api/promotions', request);
+      if (!response.ok) {
+        console.error('Error creating promotion:', response.error);
+        return null;
+      }
+      return response.data ?? null;
     } finally {
       setLoading(false);
     }
   };
 
   const getActivePromotions = async (eventId: string): Promise<EventPromotion[]> => {
-    try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/events/${eventId}/promotions`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error('Failed to fetch active promotions');
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching active promotions:', error);
+    const response = await api.get<EventPromotion[]>(`/api/events/${eventId}/promotions`);
+    if (!response.ok) {
+      console.error('Error fetching active promotions:', response.error);
       return [];
     }
+    return response.data ?? [];
   };
 
   const cancelPromotion = async (promotionId: string): Promise<boolean> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/promotions/${promotionId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.delete(`/api/promotions/${promotionId}`);
       return response.ok;
     } catch (error) {
       console.error('Error canceling promotion:', error);

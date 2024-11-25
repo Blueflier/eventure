@@ -1,30 +1,20 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { api } from '../utils/api';
 import { BlockedUser, BlockUserResponse } from '../types/BlockedUser';
 
 export function useBlockedUsers() {
-  const { session } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const blockUser = async (userId: string): Promise<BlockUserResponse> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        'YOUR_GO_BACKEND_URL/api/users/block',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({ blocked_user_id: userId }),
-        }
-      );
+      const response = await api.post<BlockUserResponse>('/api/users/block', {
+        blocked_user_id: userId,
+      });
 
-      const data = await response.json();
       return {
         success: response.ok,
-        message: data.message || 'User blocked successfully',
+        message: response.data?.message || 'User blocked successfully',
       };
     } catch (error) {
       console.error('Error blocking user:', error);
@@ -40,22 +30,13 @@ export function useBlockedUsers() {
   const unblockUser = async (userId: string): Promise<BlockUserResponse> => {
     try {
       setLoading(true);
-      const response = await fetch(
-        'YOUR_GO_BACKEND_URL/api/users/unblock',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-          body: JSON.stringify({ blocked_user_id: userId }),
-        }
-      );
+      const response = await api.post<BlockUserResponse>('/api/users/unblock', {
+        blocked_user_id: userId,
+      });
 
-      const data = await response.json();
       return {
         success: response.ok,
-        message: data.message || 'User unblocked successfully',
+        message: response.data?.message || 'User unblocked successfully',
       };
     } catch (error) {
       console.error('Error unblocking user:', error);
@@ -70,17 +51,9 @@ export function useBlockedUsers() {
 
   const getBlockedUsers = async (): Promise<BlockedUser[]> => {
     try {
-      const response = await fetch(
-        'YOUR_GO_BACKEND_URL/api/users/blocked',
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
+      const response = await api.get<BlockedUser[]>('/api/users/blocked');
       if (!response.ok) throw new Error('Failed to fetch blocked users');
-      return await response.json();
+      return response.data || [];
     } catch (error) {
       console.error('Error fetching blocked users:', error);
       return [];
@@ -89,17 +62,8 @@ export function useBlockedUsers() {
 
   const isUserBlocked = async (userId: string): Promise<boolean> => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/users/blocked/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-      return data.blocked || false;
+      const response = await api.get<{ blocked: boolean }>(`/api/users/blocked/${userId}`);
+      return response.data?.blocked || false;
     } catch (error) {
       console.error('Error checking blocked status:', error);
       return false;

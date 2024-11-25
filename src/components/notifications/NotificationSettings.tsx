@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Switch, ScrollView } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../utils/api';
+import { NotificationSettings } from '../../types/Notification';
 
 export function NotificationSettings() {
   const { session } = useAuth();
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<NotificationSettings>({
     pushEnabled: true,
     reminderNotifications: true,
     updateNotifications: true,
@@ -19,14 +20,12 @@ export function NotificationSettings() {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('notification_settings')
-        .select('*')
-        .eq('user_id', session?.user.id)
-        .single();
-
-      if (error) throw error;
-      if (data) setSettings(data);
+      const response = await api.get<NotificationSettings>('/api/notifications/settings');
+      if (response.ok && response.data) {
+        setSettings(response.data as NotificationSettings);
+      } else {
+        throw new Error(response.error || 'Failed to fetch settings');
+      }
     } catch (error) {
       console.error('Error fetching notification settings:', error);
     }
@@ -34,15 +33,15 @@ export function NotificationSettings() {
 
   const updateSetting = async (key: string, value: boolean) => {
     try {
-      const { error } = await supabase
-        .from('notification_settings')
-        .upsert({
-          user_id: session?.user.id,
-          [key]: value,
-        });
-
-      if (error) throw error;
-      setSettings({ ...settings, [key]: value });
+      const response = await api.put('/api/notifications/settings', {
+        [key]: value,
+      });
+      
+      if (response.ok) {
+        setSettings({ ...settings, [key]: value });
+      } else {
+        throw new Error(response.error || 'Failed to update settings');
+      }
     } catch (error) {
       console.error('Error updating notification settings:', error);
     }

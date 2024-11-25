@@ -3,12 +3,15 @@ import { View, StyleSheet, SectionList, Text } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { EventListItem } from './EventListItem';
 import { Event } from '../../types';
+import { api } from '../../utils/api';
 
 export function OrganizedEvents() {
   const { session } = useAuth();
   const [sections, setSections] = useState([
     { title: 'Published Events', data: [] },
+    { title: 'Scheduled Events', data: [] },
     { title: 'Draft Events', data: [] },
+    { title: 'Cancelled Events', data: [] },
     { title: 'Past Events', data: [] },
   ]);
   const [loading, setLoading] = useState(true);
@@ -19,30 +22,40 @@ export function OrganizedEvents() {
 
   const fetchOrganizedEvents = async () => {
     try {
-      const response = await fetch(
-        `YOUR_GO_BACKEND_URL/api/users/${session?.user.id}/organized-events`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.access_token}`,
-          },
-        }
+      const response = await api.get<Event[]>(
+        `/api/users/${session?.user.id}/organized-events`
       );
-      const events = await response.json();
       
+      if (!response.ok || !response.data) {
+        throw new Error(response.error || 'Failed to fetch events');
+      }
+
       const now = new Date();
-      const published = events.filter(
+      const published = response.data.filter(
         (event: Event) => 
-          event.status === 'published' && new Date(event.startDate) > now
+          event.event_status === 'published' && new Date(event.start_time) > now
       );
-      const drafts = events.filter((event: Event) => event.status === 'draft');
-      const past = events.filter(
+      const scheduled = response.data.filter(
         (event: Event) => 
-          event.status === 'published' && new Date(event.startDate) <= now
+          event.event_status === 'scheduled' && new Date(event.start_time) > now
+      );
+      const drafts = response.data.filter(
+        (event: Event) => event.event_status === 'draft'
+      );
+      const cancelled = response.data.filter(
+        (event: Event) => event.event_status === 'cancelled'
+      );
+      const past = response.data.filter(
+        (event: Event) => 
+          (event.event_status === 'published' || event.event_status === 'completed') && 
+          new Date(event.start_time) <= now
       );
 
       setSections([
         { title: 'Published Events', data: published },
+        { title: 'Scheduled Events', data: scheduled },
         { title: 'Draft Events', data: drafts },
+        { title: 'Cancelled Events', data: cancelled },
         { title: 'Past Events', data: past },
       ]);
     } catch (error) {
